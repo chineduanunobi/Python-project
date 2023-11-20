@@ -1,4 +1,5 @@
 Python-Project
+
 This repository contains the source code for a Python web application and Terraform files for deploying and managing the infrastructure.
 
 Directory Structure
