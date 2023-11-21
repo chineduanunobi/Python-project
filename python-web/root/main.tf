@@ -14,6 +14,10 @@ module "vpc" {
   private_subnet2 = var.private_subnet2
 }
 
+provider "aws" {
+  region = "us-east-1"
+}
+
 #security group resource to allow traffic to/from ports
 resource "aws_security_group" "python-web-sg" {
   name        = "${module.vpc.project_name}-SG"
@@ -75,6 +79,20 @@ resource "aws_autoscaling_group" "python-web-asg" {
   }
 }
 
+#asg policy to terminate unhealthy instances
+resource "aws_autoscaling_policy" "python-web-asg-policy" {
+  name                   = "${module.vpc.project_name}-terminate"
+  scaling_adjustment    = -1  
+  cooldown              = 300 
+  adjustment_type       = "ChangeInCapacity"
+
+  autoscaling_group_name = aws_autoscaling_group.python-web-asg.name
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 #used to create the instances
 resource "aws_launch_template" "python-web-lt" {
   name = "${module.vpc.project_name}-LT"
@@ -119,7 +137,7 @@ resource "aws_lb" "python-web-lb" {
 }
 
 #create listener for the load balancer
-resource "aws_lb_listener" "route_listener" {
+resource "aws_lb_listener" "python-web-listener" {
   load_balancer_arn = aws_lb.python-web-lb.arn
   port              = "80"
   protocol          = "HTTP"
